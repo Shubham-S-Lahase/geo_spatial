@@ -57,6 +57,25 @@ exports.getUserShapes = async (req, res) => {
   }
 };
 
+// Download shape as GeoJSON
+exports.downloadShape = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const shape = await Shape.findOne({ _id: id, userId: req.user.id });
+
+    if (!shape) {
+      return res.status(404).json({ error: 'Shape not found' });
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${shape.name}.geojson"`);
+    res.status(200).send(JSON.stringify(shape.geojson));
+  } catch (error) {
+    res.status(500).json({ error: 'Error downloading shape' });
+  }
+};
+
 // Delete a shape
 exports.deleteShape = async (req, res) => {
   try {

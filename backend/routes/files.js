@@ -1,6 +1,6 @@
 const express = require('express');
-const authMiddleware = require('../middleware/authMiddleware');
-const upload = require('../middleware/gridFsStorage');
+const authMiddleware = require('../middlewares/authMiddleware');
+const upload = require('../middlewares/gridFsStorage');
 const {
   uploadFile,
   getUserFiles,

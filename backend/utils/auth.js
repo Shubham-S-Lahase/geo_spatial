@@ -18,7 +18,3 @@ const generateToken = (payload) => jwt.sign(payload, SECRET_KEY, { expiresIn: '1
 const verifyToken = (token) => jwt.verify(token, SECRET_KEY);
 
 module.exports = { hashPassword, comparePasswords, generateToken, verifyToken };
-
-// geospatial-backend/controllers/authController.js
-const User = require('../models/User');
-const { hashPassword, comparePasswords, generateToken } = require('../utils/auth');
