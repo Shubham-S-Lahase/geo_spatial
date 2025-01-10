@@ -3,15 +3,31 @@ dotenv.config();
 
 const express = require("express");
 const cors = require("cors");
+const session = require("express-session");
 
 const connectDB = require("./config/db");
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Set up session middleware
+app.use(session({
+    secret: process.env.JWT_SECRET, // Use the secret key from the .env file
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        secure: false, 
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24
+    }
+}));
 
 // Database Connection
 connectDB();
