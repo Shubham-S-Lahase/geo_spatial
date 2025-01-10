@@ -6,6 +6,8 @@ const FileSchema = new mongoose.Schema({
   gridFsId: { type: mongoose.Schema.Types.ObjectId, required: true },
   contentType: { type: String, required: true }, 
   uploadedAt: { type: Date, default: Date.now },
+  description: { type: String },
+  tags: { type: [String] },
 });
 
 module.exports = mongoose.model('File', FileSchema);

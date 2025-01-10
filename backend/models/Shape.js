@@ -5,6 +5,8 @@ const ShapeSchema = new mongoose.Schema({
   name: { type: String, required: true },
   geojson: { type: Object, required: true }, // GeoJSON data
   createdAt: { type: Date, default: Date.now },
+  description: { type: String },
+  tags: { type: [String] },
 });
 
 module.exports = mongoose.model('Shape', ShapeSchema);
