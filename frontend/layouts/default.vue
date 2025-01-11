@@ -20,21 +20,45 @@
         </div>
       </nav>
     </header>
-    <main class="flex flex-1 items-center justify-center">
-      <AuthPopup v-if="showAuthPopup" @close="toggleAuthPopup" />
+    <main class="flex flex-1">
+      <aside class="bg-gray-100 w-full md:w-1/4 p-4">
+        <UploadButton @uploadSuccess="fetchFiles" />
+        <FileList :files="files" @toggleVisibility="toggleFileVisibility" />
+        <ShapeList :shapes="shapes" @toggleVisibility="toggleShapeVisibility" />
+        <button @click="downloadShape" class="bg-green-500 text-white p-2 rounded">
+          Download Shape as GeoJSON
+        </button>
+      </aside>
+      <div class="flex-1">
+        <MapComponent ref="mapComponent" />
+      </div>
     </main>
+    <AuthPopup v-if="showAuthPopup" @close="toggleAuthPopup" />
   </div>
 </template>
 
 <script>
 import { useUserStore } from "../store/user.js";
 import AuthPopup from "../components/AuthPopup.vue";
-import { ref, computed } from "vue";
+import UploadButton from "@/components/UploadButton.vue";
+import FileList from "@/components/FileList.vue";
+import ShapeList from "@/components/ShapeList.vue";
+import MapComponent from "@/components/MapComponent.vue";
+import { ref, computed, onMounted } from "vue";
 
 export default {
+  components: {
+    AuthPopup,
+    UploadButton,
+    FileList,
+    ShapeList,
+    MapComponent,
+  },
   setup() {
     const userStore = useUserStore();
     const showAuthPopup = ref(false);
+    const files = ref([]);
+    const shapes = ref([]);
 
     const toggleAuthPopup = () => {
       showAuthPopup.value = !showAuthPopup.value;
@@ -48,15 +72,79 @@ export default {
       userStore.clearUser ();
     };
 
-    // Create a computed property for user
     const user = computed(() => userStore.user);
+
+    const fetchFiles = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/files", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${userStore.token}`, // Include the token
+          },
+          credentials: "include",
+        });
+        const data = await response.json();
+        files.value = data.files;
+      } catch (error) {
+        console.error("Error fetching files:", error);
+      }
+    };
+
+    const fetchShapes = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/shapes", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${userStore.token}`, // Include the token
+          },
+          credentials: "include",
+        });
+        const data = await response.json();
+        shapes.value = data.shapes;
+      } catch (error) {
+        console.error("Error fetching shapes:", error);
+      }
+    };
+
+    const toggleFileVisibility = (fileId) => {
+      // Logic to toggle file visibility on the map
+    };
+
+    const toggleShapeVisibility = (shapeId) => {
+      // Logic to toggle shape visibility on the map
+    };
+
+    const downloadShape = async () => {
+      // Logic to download the selected shape as GeoJSON
+    };
+
+    onMounted(() => {
+      fetchFiles();
+      fetchShapes();
+    });
 
     return {
       user,
       showAuthPopup,
       toggleAuthPopup,
       logout,
+      files,
+      shapes,
+      fetchFiles,
+      fetchShapes,
+      toggleFileVisibility,
+      toggleShapeVisibility,
+      downloadShape,
     };
   },
 };
 </script>
+
+<style scoped>
+/* Add any additional styles here */
+@media (max-width: 768px) {
+  aside {
+    width: 100%;
+  }
+}
+</style>
