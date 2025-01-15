@@ -25,12 +25,18 @@
         <UploadButton @uploadSuccess="fetchFiles" />
         <FileList :files="files" @toggleVisibility="toggleFileVisibility" />
         <ShapeList :shapes="shapes" @toggleVisibility="toggleShapeVisibility" />
-        <button @click="downloadShape" class="bg-green-500 text-white p-2 rounded">
+        <button
+          @click="downloadShape"
+          class="bg-green-500 text-white p-2 rounded"
+        >
           Download Shape as GeoJSON
         </button>
       </aside>
       <div class="flex-1">
-        <MapComponent ref="mapComponent" />
+        <MapComponent
+          ref="mapComponentRef"
+          :files="files"
+        />
       </div>
     </main>
     <AuthPopup v-if="showAuthPopup" @close="toggleAuthPopup" />
@@ -44,7 +50,7 @@ import UploadButton from "@/components/UploadButton.vue";
 import FileList from "@/components/FileList.vue";
 import ShapeList from "@/components/ShapeList.vue";
 import MapComponent from "@/components/MapComponent.vue";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 
 export default {
   components: {
@@ -59,6 +65,7 @@ export default {
     const showAuthPopup = ref(false);
     const files = ref([]);
     const shapes = ref([]);
+    const mapComponentRef = ref(null);
 
     const toggleAuthPopup = () => {
       showAuthPopup.value = !showAuthPopup.value;
@@ -69,33 +76,36 @@ export default {
         method: "POST",
         credentials: "include", // Include cookies in the request
       });
-      userStore.clearUser ();
+      userStore.clearUser();
     };
 
     const user = computed(() => userStore.user);
+    // console.log(user);
 
     const fetchFiles = async () => {
       try {
+        const token = localStorage.getItem("token");
         const response = await fetch("http://localhost:8080/api/files", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${userStore.token}`, // Include the token
+            Authorization: `Bearer ${token}`, // Include the token
           },
           credentials: "include",
         });
         const data = await response.json();
-        files.value = data.files;
+        files.value = data.files.map((file) => ({ ...file, visible: false }));
       } catch (error) {
         console.error("Error fetching files:", error);
       }
     };
 
     const fetchShapes = async () => {
+      const token = localStorage.getItem("token");
       try {
         const response = await fetch("http://localhost:8080/api/shapes", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${userStore.token}`, // Include the token
+            Authorization: `Bearer ${token}`, // Include the token
           },
           credentials: "include",
         });
@@ -107,7 +117,19 @@ export default {
     };
 
     const toggleFileVisibility = (fileId) => {
-      // Logic to toggle file visibility on the map
+      console.log("Received toggleVisibility event for fileId:", fileId);
+      const file = files.value.find((f) => f._id === fileId);
+      console.log("Found file:", file);
+      if (file) {
+        file.visible = !file.visible;
+        if (!mapComponentRef.value) {
+          console.error("MapComponent reference is not set.");
+          setTimeout(() => toggleFileVisibility(fileId), 100);
+          return;
+        }
+
+        mapComponentRef.value.toggleFileVisibility(fileId);
+      }
     };
 
     const toggleShapeVisibility = (shapeId) => {
@@ -118,9 +140,48 @@ export default {
       // Logic to download the selected shape as GeoJSON
     };
 
-    onMounted(() => {
-      fetchFiles();
-      fetchShapes();
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/auth/user", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          userStore.setUser(userData);
+        } else {
+          console.error("User  not authenticated");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    onMounted(async () => {
+      await nextTick();
+      if (mapComponentRef.value) {
+        console.log("MapComponent initialized:", mapComponentRef.value);
+      } else {
+        console.error("MapComponent reference not initialized after nextTick.");
+      }
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        userStore.setUser(JSON.parse(storedUser));
+        fetchFiles();
+        fetchShapes();
+      } else {
+        fetchFiles();
+        fetchShapes();
+      }
+      fetchUserData();
+    });
+
+    watch(mapComponentRef, (newVal) => {
+      if (newVal) {
+        console.log("MapComponent initialized:", newVal);
+      } else {
+        console.log("MapComponent reference is still null.");
+      }
     });
 
     return {
