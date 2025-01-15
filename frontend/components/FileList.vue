@@ -20,10 +20,10 @@
             <img src="/images/edit.png" alt="editFileIcon" class="w-6 h-6" />
           </button>
           <button @click="confirmDelete(file._id)">
-            <img src="/images/delete.png" alt="deleteFileIcon" class="w-6" />
+            <img src="/images/delete.png" alt="deleteFileIcon" class="w-6 h-6" />
           </button>
           <button @click="downloadFile(file._id)">
-            <img src="/images/download.png" alt="downloadFileIcon" class="w-6" />
+            <img src="/images/download.png" alt="downloadFileIcon" class="w-6 h-6" />
           </button>
         </div>
       </li>

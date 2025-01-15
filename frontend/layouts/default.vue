@@ -29,13 +29,12 @@
           @editFile="openEditModal"
           @fileDeleted="fetchFiles"
         />
-        <ShapeList :shapes="shapes" @toggleVisibility="toggleShapeVisibility" />
-        <button
-          @click="downloadShape"
-          class="bg-green-500 text-white p-2 rounded"
-        >
-          Download Shape as GeoJSON
-        </button>
+        <ShapeList
+          :shapes="shapes"
+          @toggleVisibility="toggleShapeVisibility"
+          @editShape="openEditShapeModal"
+          @shapeDeleted="fetchShapes"
+        />
       </aside>
       <div class="flex-1">
         <MapComponent ref="mapComponentRef" :files="files" />
@@ -48,6 +47,12 @@
       @close="closeEditModal"
       @update="updateFile"
     />
+    <EditShapeModal
+      v-if="showEditShapeModal"
+      :shape="shapeToEdit"
+      @close="closeEditShapeModal"
+      @update="updateShape"
+    />
   </div>
 </template>
 
@@ -59,6 +64,7 @@ import FileList from "@/components/FileList.vue";
 import ShapeList from "@/components/ShapeList.vue";
 import MapComponent from "@/components/MapComponent.vue";
 import EditFileModal from "@/components/EditFileModal.vue";
+import EditShapeModal from "@/components/EditShapeModal.vue";
 import { ref, computed, onMounted, nextTick, watch } from "vue";
 
 export default {
@@ -69,12 +75,15 @@ export default {
     ShapeList,
     MapComponent,
     EditFileModal,
+    EditFileModal,
   },
   setup() {
     const userStore = useUserStore();
     const showAuthPopup = ref(false);
     const showEditModal = ref(false);
+    const showEditShapeModal = ref(false);
     const fileToEdit = ref(null);
+    const shapeToEdit = ref(null);
     const files = ref([]);
     const shapes = ref([]);
     const mapComponentRef = ref(null);
@@ -161,27 +170,56 @@ export default {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             description: updatedFile.description,
-            tags: updatedFile.tags.join(','),
+            tags: updatedFile.tags.join(","),
           }),
         });
-        fetchFiles(); 
+        fetchFiles();
         closeEditModal();
       } catch (error) {
         console.error("Error updating file:", error);
       }
     };
 
-
     const toggleShapeVisibility = (shapeId) => {
-      // Logic to toggle shape visibility on the map
+      const shape = shapes.value.find((s) => s._id === shapeId);
+      if (shape) {
+        shape.visible = !shape.visible;
+        if (mapComponentRef.value) {
+          mapComponentRef.value.toggleShapeVisibility(shapeId);
+        }
+      }
     };
 
-    const downloadShape = async () => {
-      // Logic to download the selected shape as GeoJSON
+    const openEditShapeModal = (shape) => {
+      shapeToEdit.value = shape;
+      showEditShapeModal.value = true;
+    };
+
+    const closeEditShapeModal = () => {
+      showEditShapeModal.value = false;
+      shapeToEdit.value = null;
+    };
+
+    const updateShape = async (updatedShape) => {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(`http://localhost:8080/api/shapes/${updatedShape._id}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedShape),
+        });
+        fetchShapes();
+        closeEditShapeModal();
+      } catch (error) {
+        console.error("Error updating shape:", error);
+      }
     };
 
     const fetchUserData = async () => {
@@ -244,7 +282,11 @@ export default {
       showEditModal,
       fileToEdit,
       updateFile,
-      downloadShape,
+      openEditShapeModal,
+      closeEditShapeModal,
+      showEditShapeModal,
+      shapeToEdit,
+      updateShape,
     };
   },
 };
