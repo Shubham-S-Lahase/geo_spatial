@@ -63,6 +63,34 @@ export default {
         console.error("Error deleting file:", error);
       }
     },
+    async downloadFile(fileId) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`http://localhost:8080/api/files/download/${fileId}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Error downloading file');
+        }
+
+        // Create a blob from the response
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileId;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error downloading file:", error);
+      }
+    },
   },
 };
 </script>

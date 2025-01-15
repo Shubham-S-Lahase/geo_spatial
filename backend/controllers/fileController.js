@@ -53,7 +53,7 @@ exports.downloadFile = async (req, res) => {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    const filePath = path.join(__dirname, '../../uploads', file.fileName);
+    const filePath = path.join(__dirname, '../../backend/uploads', file.fileName);
     res.download(filePath, file.fileName); // Serve the file for download
   } catch (error) {
     res.status(500).json({ error: 'Error downloading file' });
@@ -97,7 +97,7 @@ exports.deleteFile = async (req, res) => {
     }
 
     // Delete the file from the filesystem
-    const filePath = path.join(__dirname, '../../uploads', file.fileName);
+    const filePath = path.join(__dirname, '../../backend/uploads', file.fileName);
     fs.unlinkSync(filePath);
 
     await File.deleteOne({ _id: id, userId: req.user.id }); // Also delete from the File collection
