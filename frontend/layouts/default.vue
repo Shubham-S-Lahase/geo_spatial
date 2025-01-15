@@ -23,7 +23,12 @@
     <main class="flex flex-1">
       <aside class="bg-gray-100 w-full md:w-1/4 p-4">
         <UploadButton @uploadSuccess="fetchFiles" />
-        <FileList :files="files" @toggleVisibility="toggleFileVisibility" />
+        <FileList
+          :files="files"
+          @toggleVisibility="toggleFileVisibility"
+          @editFile="openEditModal"
+          @fileDeleted="fetchFiles"
+        />
         <ShapeList :shapes="shapes" @toggleVisibility="toggleShapeVisibility" />
         <button
           @click="downloadShape"
@@ -33,13 +38,16 @@
         </button>
       </aside>
       <div class="flex-1">
-        <MapComponent
-          ref="mapComponentRef"
-          :files="files"
-        />
+        <MapComponent ref="mapComponentRef" :files="files" />
       </div>
     </main>
     <AuthPopup v-if="showAuthPopup" @close="toggleAuthPopup" />
+    <EditFileModal
+      v-if="showEditModal"
+      :file="fileToEdit"
+      @close="closeEditModal"
+      @update="updateFile"
+    />
   </div>
 </template>
 
@@ -50,6 +58,7 @@ import UploadButton from "@/components/UploadButton.vue";
 import FileList from "@/components/FileList.vue";
 import ShapeList from "@/components/ShapeList.vue";
 import MapComponent from "@/components/MapComponent.vue";
+import EditFileModal from "@/components/EditFileModal.vue";
 import { ref, computed, onMounted, nextTick, watch } from "vue";
 
 export default {
@@ -59,10 +68,13 @@ export default {
     FileList,
     ShapeList,
     MapComponent,
+    EditFileModal,
   },
   setup() {
     const userStore = useUserStore();
     const showAuthPopup = ref(false);
+    const showEditModal = ref(false);
+    const fileToEdit = ref(null);
     const files = ref([]);
     const shapes = ref([]);
     const mapComponentRef = ref(null);
@@ -132,6 +144,38 @@ export default {
       }
     };
 
+    const openEditModal = (file) => {
+      fileToEdit.value = file;
+      showEditModal.value = true;
+    };
+
+    const closeEditModal = () => {
+      showEditModal.value = false;
+      fileToEdit.value = null;
+    };
+
+    const updateFile = async (updatedFile) => {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(`http://localhost:8080/api/files/${updatedFile._id}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            description: updatedFile.description,
+            tags: updatedFile.tags.join(','),
+          }),
+        });
+        fetchFiles(); 
+        closeEditModal();
+      } catch (error) {
+        console.error("Error updating file:", error);
+      }
+    };
+
+
     const toggleShapeVisibility = (shapeId) => {
       // Logic to toggle shape visibility on the map
     };
@@ -195,6 +239,11 @@ export default {
       fetchShapes,
       toggleFileVisibility,
       toggleShapeVisibility,
+      openEditModal,
+      closeEditModal,
+      showEditModal,
+      fileToEdit,
+      updateFile,
       downloadShape,
     };
   },

@@ -8,16 +8,23 @@
         class="flex justify-between items-center"
       >
         <span>{{ file.fileName }}</span>
-        <div class="flex">
+        <div class="flex items-center">
           <button @click="toggleVisibility(file._id)">
             <img
-              :src="file.visible ? './images/show.png' : './images/hide.png'"
+              :src="file.visible ? '/images/show.png' : '/images/hide.png'"
               alt="visibility toggle"
               class="w-6 h-6"
             />
           </button>
-          <button @click="editFile(file._id)">✏️</button>
-          <button @click="confirmDelete(file._id)">🗑️</button>
+          <button @click="editFile(file)">
+            <img src="/images/edit.png" alt="editFileIcon" class="w-6 h-6" />
+          </button>
+          <button @click="confirmDelete(file._id)">
+            <img src="/images/delete.png" alt="deleteFileIcon" class="w-6" />
+          </button>
+          <button @click="downloadFile(file._id)">
+            <img src="/images/download.png" alt="downloadFileIcon" class="w-6" />
+          </button>
         </div>
       </li>
     </ul>
@@ -34,9 +41,27 @@ export default {
     isVisible(fileId) {
       return this.$store.state.user.preferences.datasets.includes(fileId);
     },
-    editFile(fileId) {
+    editFile(file) {
+      this.$emit("editFile", file);
     },
     confirmDelete(fileId) {
+      if (confirm("Are you sure you want to delete this file?")) {
+        this.deleteFile(fileId);
+      }
+    },
+    async deleteFile(fileId) {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(`http://localhost:8080/api/files/${fileId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        this.$emit("fileDeleted", fileId);
+      } catch (error) {
+        console.error("Error deleting file:", error);
+      }
     },
   },
 };
