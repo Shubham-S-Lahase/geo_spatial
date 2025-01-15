@@ -12,7 +12,7 @@ const hashPassword = async (password) => {
 const comparePasswords = (plainText, hashed) => bcrypt.compare(plainText, hashed);
 
 // Generate a JWT token
-const generateToken = (payload) => jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' });
+const generateToken = (payload) => jwt.sign(payload, SECRET_KEY, { expiresIn: '24h' });
 
 // Verify a JWT token
 const verifyToken = (token) => jwt.verify(token, SECRET_KEY);

@@ -4,6 +4,7 @@ dotenv.config();
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
+const path = require("path");
 
 const connectDB = require("./config/db");
 
@@ -28,6 +29,9 @@ app.use(session({
         maxAge: 1000 * 60 * 60 * 24
     }
 }));
+
+// Serve static files from the "uploads" directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database Connection
 connectDB();

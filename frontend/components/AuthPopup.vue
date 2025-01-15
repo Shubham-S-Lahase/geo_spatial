@@ -113,14 +113,13 @@ export default {
           }
 
           const data = await response.json();
-        //   console.log("Login response data:", data);
+          console.log("Login response data:", data);
 
           if (data.user) {
-            userStore.setUser({
-              id: data.user.id,
-              email: data.user.email,
-              username: data.user.username,
-            });
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('token', data.token);
+            userStore.setUser (data.user);
+            window.location.reload();
           } else {
             throw new Error("User  data not found in response");
           }

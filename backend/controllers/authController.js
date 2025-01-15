@@ -65,6 +65,11 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-  res.clearCookie("token");
-  res.status(200).json({ message: "Logged out successfully" });
+  req.session.destroy(err => {
+    if (err) {
+        return res.status(500).json({ message: "Error logging out" });
+    }
+    res.clearCookie("connect.sid");
+    res.status(200).json({ message: "Logged out successfully" });
+});
 };
