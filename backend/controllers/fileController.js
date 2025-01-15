@@ -60,6 +60,32 @@ exports.downloadFile = async (req, res) => {
   }
 };
 
+// Update a file
+exports.editFile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { description, tags } = req.body;
+
+    const file = await File.findOne({ _id: id, userId: req.user.id });
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Update file metadata
+    file.description = description || file.description;
+    file.tags = tags ? tags.split(',').map(tag => tag.trim()) : file.tags;
+
+    await file.save();
+
+    res.status(200).json({
+      message: 'File updated successfully',
+      file,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating file' });
+  }
+};
+
 // Delete a file
 exports.deleteFile = async (req, res) => {
   try {
